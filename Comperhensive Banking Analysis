@@ -1,1 +1,739 @@
+ Comprehensive Banking Analytics 
+
+# Objective: 
+#             The objective of this project is to leverage advanced data analytics techniques, including classification to extract valuable insights and enhance decision-making processes within the banking sector.
+# 
+# Key Component:
+#               * Utilize clustering algorithms to group customers based on their banking 
+#                 behaviors, transaction histories, and demographics. 
+#               * Develop a robust credit scoring system using classification algorithms to assess the creditworthiness of loan                   applicants. 
+#               * Utilize historical data to train the model and predict the likelihood of default 
+#                 or late payments. 
+#               * Enhance risk management by integrating machine learning models into the 
+#                 credit approval process. 
+# Technological Stack: 
+#               * Python for data preprocessing, analysis, and modeling. 
+#               * Scikit-learn, TensorFlow, or PyTorch for implementing machine learning algorithms. 
+#               * Jupyter Notebooks for code development and documentation. 
+#               * Visualization tools such as Matplotlib or Seaborn for data exploration and 
+#                 presentation. 
+
+# Data Description
+# 
+# *ID: Unique ID of the record
+# *Customer_ID: Unique ID of the customer
+# *Month: Month of the year
+# *Name: The name of the person
+# *Age: The age of the person
+# *SSN: Social Security Number of the person
+# *Occupation: The occupation of the person
+# *Annual_Income: The Annual Income of the person
+# *Monthly_Inhand_Salary: Monthly in-hand salary of the person
+# *Num_Bank_Accounts: The number of bank accounts of the person
+# *Num_Credit_Card: Number of credit cards the person is having
+# *Interest_Rate: The interest rate on the credit card of the person
+# *Num_of_Loan: The number of loans taken by the person from the bank
+# *Type_of_Loan: The types of loans taken by the person from the bank
+# *Delay_from_due_date: The average number of days delayed by the person from the date of payment
+# *Num_of_Delayed_Payment: Number of payments delayed by the person
+# *Changed_Credit_Card: The percentage change in the credit card limit of the person
+# *Num_Credit_Inquiries: The number of credit card inquiries by the person
+# *Credit_Mix: Classification of Credit Mix of the customer
+# *Outstanding_Debt: The outstanding balance of the person
+# *Credit_Utilization_Ratio: The credit utilization ratio of the credit card of the customer
+# *Credit_History_Age: The age of the credit history of the person
+# *Payment_of_Min_Amount: Yes if the person paid the minimum amount to be paid only, otherwise no.
+# *Total_EMI_per_month: The total EMI per month of the person
+# *Amount_invested_monthly: The monthly amount invested by the person
+# *Payment_Behaviour: The payment behaviour of the person
+# *Monthly_Balance: The monthly balance left in the account of the person
+# *Credit_Score: The credit score of the person
+
+# Import Needed Libraries 
+
+# In[194]:
+
+
+import pandas as pd
+import numpy as np
+import seaborn as sns
+from sklearn.metrics import classification_report, precision_recall_curve, roc_curve, roc_auc_score
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from matplotlib import pyplot as plt
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_samples, silhouette_score
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.linear_model import LogisticRegression
+
+
+# Data Processing
+#  * Read the Dataset using Pandas
+
+# In[163]:
+
+
+df=pd.read_csv("C:/Users/jpcom/Desktop/DS PDF/train.csv")
+
+
+# In[3]:
+
+
+df
+
+
+#  * Information about the data
+
+# In[4]:
+
+
+df.info()
+
+
+#  * Null Values Checking
+
+# In[5]:
+
+
+df.isnull().sum()
+
+
+# * Describtion of numeric columns in the dataset
+
+# In[6]:
+
+
+df.describe()
+
+
+# In[195]:
+
+
+df.nunique()
+
+
+# checking Outlier by using seaborn
+
+# In[73]:
+
+
+sns.boxplot(data=df,orient='horizontal')
+
+
+# Analyse the dataset by univariate analysis
+
+# In[11]:
+
+
+df.hist('Annual_Income')
+
+
+# In[10]:
+
+
+df.hist("Num_Credit_Card")
+
+
+# In[14]:
+
+
+sns.kdeplot(data=df, x="Monthly_Inhand_Salary")
+
+
+# In[18]:
+
+
+df.hist('Num_Bank_Accounts')
+
+
+# In[17]:
+
+
+sns.kdeplot(data=df, x='Interest_Rate')
+
+
+# In[19]:
+
+
+sns.kdeplot(data=df,x='Num_of_Loan')
+
+
+# In[21]:
+
+
+sns.kdeplot(data=df, x='Delay_from_due_date')
+
+
+# In[22]:
+
+
+sns.kdeplot(data=df, x='Num_of_Delayed_Payment')
+
+
+# In[26]:
+
+
+sns.kdeplot(data=df, x='Outstanding_Debt')
+
+
+# In[27]:
+
+
+sns.kdeplot(data=df, x='Num_Credit_Inquiries')
+
+
+#  * Find Unique values count in the column
+
+# In[28]:
+
+
+sns.kdeplot(data=df,x='Changed_Credit_Limit')
+
+
+# In[29]:
+
+
+sns.kdeplot(data=df,x ='Credit_Utilization_Ratio')
+
+
+# In[30]:
+
+
+sns.kdeplot(data= df, x='Credit_History_Age')
+
+
+# In[32]:
+
+
+sns.kdeplot(data=df, x='Total_EMI_per_month')
+
+
+# In[33]:
+
+
+sns.kdeplot(data=df, x='Amount_invested_monthly')
+
+
+# In[34]:
+
+
+sns.kdeplot(data=df, x='Monthly_Balance')
+
+
+# For Customer Segmentation (Clustering):
+# Feature Selction: 
+#                   select numeric column in the dataset by univariate analysis based on customer banking behaviors, transaction histories, and  demographics  for feature selection.
+
+# In[59]:
+
+
+cluster_df = df[["Annual_Income", "Monthly_Inhand_Salary", 
+                   "Changed_Credit_Limit",
+                   "Total_EMI_per_month", "Outstanding_Debt", 
+                   "Credit_Utilization_Ratio","Amount_invested_monthly", "Monthly_Balance"]]
+kmeans= KMeans(n_clusters=5)
+kmeans.fit(cluster_df)
+
+
+# In[68]:
+
+
+lable=kmeans.predict(cluster_df)
+centroids=kmeans.cluster_centers_
+df['cluster_data']=lable
+
+
+# In[69]:
+
+
+df.hist("cluster_data")
+
+
+# In[71]:
+
+
+silhouette_avg = silhouette_score(cluster_df, lable)
+print("For n_clusters =",5,"The average silhouette_score is :",silhouette_avg,)
+
+
+# For Credit Risk Assessment(Classification)
+# Develop a robust credit scoring system using classification algorithms to 
+# assess the creditworthiness of loan applicants. 
+
+# * Drop the categorical columns in dataset which is not impact the prediction
+
+# In[185]:
+
+
+df.drop(columns=['ID', 'Name','Payment_Behaviour','Type_of_Loan','Payment_of_Min_Amount'])
+
+
+#  * Value counts of Target column 
+
+# In[186]:
+
+
+df['Credit_Score'].value_counts()
+
+
+# In[188]:
+
+
+sns.displot(df, x="Credit_Score")
+
+
+#  * Checking outlier by using seaborn
+
+# EDA
+# *Bivariate Analysis 
+#  *Analyse numeric columns in the dataset by target column by using seaborn
+
+# In[63]:
+
+
+sns.catplot(data=df, x="Credit_Score", y="Age", kind="box")
+
+
+# In[64]:
+
+
+sns.catplot(data=df, x="Credit_Score", y="Annual_Income", kind="bar")
+
+
+# In[65]:
+
+
+sns.catplot(data=df, x="Credit_Score", y="Monthly_Inhand_Salary", kind="bar")
+
+
+# In[66]:
+
+
+sns.catplot(data=df, x="Credit_Score", y="Num_Bank_Accounts", kind="bar")
+
+
+# In[67]:
+
+
+sns.catplot(data=df, x="Credit_Score", y="Num_Credit_Card", kind="bar")
+
+
+# In[68]:
+
+
+sns.catplot(data=df, x="Credit_Score", y="Interest_Rate", kind="bar")
+
+
+# In[69]:
+
+
+sns.catplot(data=df, x="Credit_Score", y="Num_of_Loan", kind="bar")
+
+
+# In[70]:
+
+
+sns.catplot(data=df, x="Credit_Score", y="Delay_from_due_date", kind="bar")
+
+
+# In[71]:
+
+
+sns.catplot(data=df, x="Credit_Score", y="Num_of_Delayed_Payment", kind="bar")
+
+
+# In[72]:
+
+
+sns.catplot(data=df, x="Credit_Score", y="Num_Credit_Inquiries", kind="bar")
+
+
+# In[73]:
+
+
+sns.catplot(data=df, x="Credit_Score", y="Outstanding_Debt", kind="bar")
+
+
+# In[74]:
+
+
+sns.catplot(data=df, x="Credit_Score", y="Credit_Utilization_Ratio", kind="bar")
+
+
+# In[75]:
+
+
+sns.catplot(data=df, x="Credit_Score", y="Credit_History_Age", kind="bar")
+
+
+# In[76]:
+
+
+sns.catplot(data=df, x="Credit_Score", y="Total_EMI_per_month", kind="bar")
+
+
+# In[77]:
+
+
+sns.catplot(data=df, x="Credit_Score", y="Amount_invested_monthly", kind="bar")
+
+
+# In[78]:
+
+
+sns.catplot(data=df, x="Credit_Score", y="Monthly_Balance", kind="bar")
+
+
+# Feature Selection
+
+# * change categorical column into numeric column for feature selection
+
+# In[86]:
+
+
+df["Credit_Mix"] = df["Credit_Mix"].map({"Standard":1,"Good":2,"Bad":0})
+
+
+# In[87]:
+
+
+df['Credit_Mix'].value_counts()
+
+
+# In[89]:
+
+
+sns.catplot(data=df, x='Credit_Score', y='Credit_Mix',kind='bar')
+
+
+# * use Correlation Matrix to select feature columns by using Matplotlib
+
+# In[90]:
+
+
+plt.figure(figsize=(20,20))
+plt.title("Correlation Matrix")
+sns.heatmap(df.corr(), color="k", annot=True, cmap="YlGnBu")
+
+
+# Algorithm Selection
+
+# The target column is categorical, so go to select Model under classification methed.
+# The target column has more than two value so go to Model under multiclass classification.
+
+# In[91]:
+
+
+x = np.array(df[["Annual_Income", "Monthly_Inhand_Salary", 
+                   "Num_Bank_Accounts", "Num_Credit_Card", 
+                   "Interest_Rate", "Num_of_Loan", 
+                   "Delay_from_due_date", "Num_of_Delayed_Payment", 
+                   "Credit_Mix", "Outstanding_Debt", 
+                   "Credit_History_Age", "Monthly_Balance"]])
+y = np.array(df[["Credit_Score"]])
+
+
+# Model Training
+# * Decision Tree
+
+# In[92]:
+
+
+xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.20, random_state=42)
+model = DecisionTreeClassifier()
+model.fit(xtrain, ytrain)
+
+
+# In[97]:
+
+
+print(model.score(xtrain, ytrain))
+
+
+# In[98]:
+
+
+print(f'Model Accuracy for train data: {model.score(xtrain, ytrain)}')
+print(f'Model Accuracy for test data: {model.score(xtest, ytest)}')
+
+
+# Accuracy for test data of decision tree below 80%, let check with  classification report
+
+# In[99]:
+
+
+ypred = model.predict(xtest)
+
+
+# In[104]:
+
+
+from sklearn.metrics import classification_report, precision_recall_curve, roc_curve, roc_auc_score
+
+print(classification_report(ytest, ypred))
+
+
+# Here also accuracy under 80%, so go to next model
+
+# Next Model
+#  * Random Forest
+
+# In[105]:
+
+
+xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.20, random_state=42)
+model1 = RandomForestClassifier()
+model1.fit(xtrain, ytrain)
+
+
+# In[106]:
+
+
+print(model1.score(xtrain, ytrain))
+
+
+# In[108]:
+
+
+print(f'Model1 Accuracy for train data: {model1.score(xtrain, ytrain)}')
+print(f'Model1 Accuracy for test data: {model1.score(xtest, ytest)}')
+
+
+# Here, accuracy of random forest in above 80%, For perfect prediction check with  classification report
+
+# In[109]:
+
+
+ypred = model1.predict(xtest)
+
+
+# In[111]:
+
+
+print(classification_report(ytest, ypred))
+
+
+# At the end of classification report accuracy of random forest remain above 80%
+
+# prediction
+# 
+# *Let predict the credit score by random forest test data
+
+# In[ ]:
+
+
+print("Credit Score Prediction : ")
+a = float(input("Annual Income: "))
+b = float(input("Monthly Inhand Salary: "))
+c = float(input("Number of Bank Accounts: "))
+d = float(input("Number of Credit cards: "))
+e = float(input("Interest rate: "))
+f = float(input("Number of Loans: "))
+g = float(input("Average number of days delayed by the person: "))
+h = float(input("Number of delayed payments: "))
+i = input("Credit Mix (Bad: 0, Standard: 1, Good: 3) : ")
+j = float(input("Outstanding Debt: "))
+k = float(input("Credit History Age: "))
+l = float(input("Monthly Balance: "))
+
+features = np.array([[a, b, c, d, e, f, g, h, i, j, k, l]])
+print("Predicted Credit Score = ", model1.predict(features))
+
+
+# NEXT PREDICTION
+
+# Utilize historical data to train the model and let predict the likelihood of default 
+# or late payments
+
+# Analyse numeric columns in the dataset by target column by using seaborn
+
+# In[81]:
+
+
+df['Num_of_Delayed_Payment'].value_counts()
+
+
+# In[80]:
+
+
+sns.displot(df,x='Num_of_Delayed_Payment')
+
+
+# In[89]:
+
+
+sns.catplot(data=df,x="Num_of_Delayed_Payment",y="Annual_Income", kind="bar",aspect=3)
+
+
+# In[92]:
+
+
+sns.catplot(data=df,x="Num_of_Delayed_Payment",y="Num_Bank_Accounts", kind="bar",aspect=3)
+
+
+# In[93]:
+
+
+sns.catplot(data=df,x="Num_of_Delayed_Payment",y="Num_Credit_Card", kind="bar",aspect=3)
+
+
+# In[94]:
+
+
+sns.catplot(data=df,x="Num_of_Delayed_Payment",y="Num_of_Loan", kind="bar",aspect=3)
+
+
+# In[95]:
+
+
+sns.catplot(data=df,x="Num_of_Delayed_Payment",y="Delay_from_due_date", kind="bar",aspect=3)
+
+
+# In[96]:
+
+
+sns.catplot(data=df,x="Num_of_Delayed_Payment",y="Changed_Credit_Limit", kind="bar",aspect=3)
+
+
+# In[97]:
+
+
+sns.catplot(data=df,x="Num_of_Delayed_Payment",y="Num_Credit_Inquiries", kind="bar",aspect=3)
+
+
+# In[98]:
+
+
+sns.catplot(data=df,x="Num_of_Delayed_Payment",y="Outstanding_Debt", kind="bar",aspect=3)
+
+
+# In[100]:
+
+
+sns.catplot(data=df,x="Num_of_Delayed_Payment",y="Credit_History_Age", kind="bar",aspect=3)
+
+
+# In[101]:
+
+
+sns.catplot(data=df,x="Num_of_Delayed_Payment",y="Total_EMI_per_month", kind="bar",aspect=3)
+
+
+# In[102]:
+
+
+sns.catplot(data=df,x="Num_of_Delayed_Payment",y="Amount_invested_monthly", kind="bar",aspect=3)
+
+
+# In[103]:
+
+
+sns.catplot(data=df,x="Num_of_Delayed_Payment",y="Monthly_Balance", kind="bar",aspect=3)
+
+
+# By the Bivariate analysis select some columns which is important to the prediction and create that into new dataframe by dropping other columns
+
+# In[144]:
+
+
+df1=df.drop(columns=['ID','Customer_ID','Monthly_Inhand_Salary','Credit_Mix','Month','Age','SSN','Occupation',
+                     'Credit_Utilization_Ratio','Name','Payment_Behaviour','Type_of_Loan','Payment_of_Min_Amount',
+                    'Amount_invested_monthly','Payment_Behaviour','Credit_Score','clustered_data','new','cluster_data'])
+
+
+# In[145]:
+
+
+df1.info()
+
+
+# In[146]:
+
+
+plt.figure(figsize=(20,20))
+plt.title("Correlation Matrix")
+sns.heatmap(df1.corr(), color="k", annot=True, cmap="YlGnBu")
+
+
+# Feature selction
+# *Select the column by above Correlation Matrix 
+
+# In[158]:
+
+
+X = np.array(df[['Changed_Credit_Limit','Delay_from_due_date','Num_of_Loan','Interest_Rate',
+                 'Num_Credit_Inquiries','Outstanding_Debt',
+                 'Num_Bank_Accounts','Num_Credit_Card']])
+Y = np.array(df[["Num_of_Delayed_Payment"]])
+
+
+# In[167]:
+
+
+xtrain, xtest, ytrain, ytest = train_test_split(X, Y, test_size=0.30, random_state=42)
+model1 =  RandomForestClassifier()
+model1.fit(xtrain, ytrain)
+
+
+# In[168]:
+
+
+print(f'Model Accuracy for train data: {model1.score(xtrain, ytrain)}')
+print(f'Model Accuracy for test data: {model1.score(xtest, ytest)}')
+
+
+# In[169]:
+
+
+ypred = model1.predict(xtest)
+print(classification_report(ytest, ypred))
+
+
+# By this analysis late payment in 50% by default
+
+# Performance Prediction (Regression): 
+# * Build regression models to predict key performance indicators (KPIs) for the 
+# banking institution, such as asset growth, revenue, and profitability. 
+# * Analyze the impact of various factors, such as economic indicators and market 
+# trends, on the bank's performance. 
+# * Provide actionable insights to optimize resource allocation, investment 
+# strategies, and overall business performance. 
+
+# important feature selection
+
+# In[190]:
+
+
+df2=df.drop(columns=['ID','Customer_ID','Month','Age','SSN','Occupation','Name','Type_of_Loan'])
+
+
+# In[191]:
+
+
+df2
+
+
+# In[193]:
+
+
+X_num = df2.select_dtypes(exclude='object')
+X_cat = df2.select_dtypes(include='object')
+encoder = OneHotEncoder(sparse=False, handle_unknown='error')
+X_encoded = encoder.fit_transform(X_cat)
+X_encoded
+
+
+# In[196]:
+
+
+plt.figure(figsize=(20,20))
+plt.title("Correlation Matrix")
+sns.heatmap(df2.corr(), color="k", annot=True, cmap="YlGnBu")
+
+
+
 
