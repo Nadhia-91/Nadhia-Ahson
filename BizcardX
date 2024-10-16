@@ -1,0 +1,207 @@
+
+import streamlit as st
+from streamlit_option_menu import option_menu
+import easyocr
+from PIL import Image
+import pandas as pd
+import numpy as np
+import re
+import io
+import sqlite3
+#convert image into text
+def image_into_text(path):
+  image =Image.open(path)
+  image_array=np.array(image)
+  read=easyocr.Reader(['en'])
+  text=read.readtext(image_array,detail=0)
+  return text,image
+
+# ectracted_details_image
+def details_image(details):
+  extract_details={"NAME":[],"DESIGNATION":[],"COMPANY_NAME":[],"CONTACT":[],"EMAIL":[],"WEBSITE":[],
+                   "ADDRESS":[],"PINCODE":[]}
+  extract_details["NAME"].append(details[0])
+  extract_details["DESIGNATION"].append(details[1])
+  for i in range(2,len(details)):
+    if details[i].startswith("+") or (details[i].replace("-","").isdigit() and "-" in details[i]):
+      extract_details["CONTACT"].append(details[i])
+    elif "@" in details[i] or ".com" in details[i]:
+      extract_details["EMAIL"].append(details[i])
+    elif "www" in details[i] or "WWW" in details[i] or "Www" in details[i] or "wWw" in details[i] or "wwW" in details[i]:
+      small=details[i].lower()
+      extract_details["WEBSITE"].append(small)
+    elif "Tamil Nadu"in details[i] or "TamilNadu"in details[i] or details[i].isdigit():
+      extract_details["PINCODE"].append(details[i])
+    elif re.match(r'^[A-Za-z]',details[i]):
+      extract_details["COMPANY_NAME"].append(details[i])
+    else:
+      remove_colon = re.sub(r'[,;]','',details[i])
+      extract_details["ADDRESS"].append(remove_colon)
+
+  for key,value in extract_details.items():
+      if len(value)>0:
+        connect = " ".join(value)
+        extract_details[key]=[connect]
+      else:
+        value="NA"
+        extract_details[key]=[value]
+  return extract_details
+
+#streamlit
+st.set_page_config(layout= "wide")
+st.title("BizCardX")
+st.header("Extracting Business Card Data with OCR")
+selected = option_menu(None, ["Home","Upload & Extract","Modify"],
+                       icons=["house","cloud-upload","pencil-square"],
+                       default_index=0,
+                       orientation="horizontal",
+                       styles={"nav-link": {"font-size": "35px", "text-align": "centre", "margin": "0px", "--hover-color": "#6495ED"},
+                               "icon": {"font-size": "35px"},
+                               "container" : {"max-width": "6000px"},
+                               "nav-link-selected": {"background-color": "#6495ED"}})
+if selected =="Home":
+  col1,col2 = st.columns(2)
+  with col1:
+        st.markdown("## :blue[**Technologies Used :**] Python, easy OCR, Streamlit GUI, SQL, Data Extraction, Pandas")
+        st.markdown("## :blue[**Overview :**] In this streamlit web app you can upload an image of a business card and extract relevant information from it using easyOCR. You can view, modify or delete the extracted data in this app. This app would also allow users to save the extracted information into a database along with the uploaded business card image. The database would be able to store multiple entries, each with its own business card image and extracted information.")
+
+elif selected =="Upload & Extract":
+  img=st.file_uploader("Upload the Image",type=["png","jpg","jpeg"])
+  if img is not None:
+    st.image(img, width=300)
+    text1, image1 = image_into_text(img)
+    text_dictionary = details_image(text1)
+    if text_dictionary:
+      st.success("Extracted Successfully")
+    df=pd.DataFrame(text_dictionary)
+
+    #into binary
+    Image_bytes=io.BytesIO()
+    image1.save(Image_bytes, format="PNG")
+    image_data=Image_bytes.getvalue()
+    #creating dict
+    data={"IMAGE":[image_data]}
+    df1=pd.DataFrame(data)
+    connect=pd.concat([df,df1],axis=1)
+    st.dataframe(connect)
+
+    button1=st.button("save")
+    if button1:
+      # connect sql
+        my_db=sqlite3.connect("bizcard.db")
+        cur=my_db.cursor()
+        #sql table
+        create_querry='''create table if not exists bizcard_details(name varchar(225),designation varchar(225),company_name varchar (225),contact varchar(225), email varchar(225), website text(225), address text(225), pincode varchar(225), image text)'''
+        cur.execute(create_querry)
+        my_db.commit()
+      #insert querry
+        insert_querry='''insert into bizcard_details (name, designation, company_name, contact, email, website, address, pincode, image) values(?,?,?,?,?,?,?,?,?)'''
+        datas=connect.values.tolist()[0]
+        cur.execute(insert_querry,datas)
+        my_db.commit()
+        st.success("saved")
+  method= st.radio("Select",["None","Preveiw","Modify"])
+  if method=="None":
+    st.write("")
+  if method=="Preveiw":
+        my_db=sqlite3.connect("bizcard.db")
+        cur=my_db.cursor()
+
+      #select querry
+        select_querry= "SELECT * FROM bizcard_details"
+        cur.execute(select_querry)
+        table=cur.fetchall()
+        my_db.commit()
+        tab=pd.DataFrame(table,columns=("NAME", "DESIGNATION", "COMPANY_NAME", "CONTACT", "EMAIL", "WEBSITE", "ADDRESS", "PINCODE", "IMAGE"))
+        col1,col2=st.columns(2)
+        with col1:
+          selected_name=st.selectbox("select the name",tab["NAME"])
+        df3=tab[tab["NAME"]==selected_name]
+        st.dataframe(df3)
+        df4=df3.copy()
+
+        col1,col2=st.columns(2)
+        with col1:
+          mod_nam=st.text_input("Name",df3["NAME"].unique()[0])
+          mod_des=st.text_input("Designation",df3["DESIGNATION"].unique()[0])
+          mod_com=st.text_input("Company_Name",df3["COMPANY_NAME"].unique()[0])
+          mod_cont=st.text_input("Contact",df3["CONTACT"].unique()[0])
+          mod_email=st.text_input("Email",df3["EMAIL"].unique()[0])
+          df4["NAME"]=mod_nam
+          df4["DESIGNATION"]=mod_des
+          df4["COMPANY_NAME"]=mod_com
+          df4["CONTACT"]=mod_cont
+          df4["EMAIL"]=mod_email
+        with col2:
+
+          mod_web=st.text_input("Website",df3["WEBSITE"].unique()[0])
+          mod_add=st.text_input("Address",df3["ADDRESS"].unique()[0])
+          mod_pin=st.text_input("Pincode",df3["PINCODE"].unique()[0])
+          mod_img=st.text_input("Image",df3["IMAGE"].unique()[0])
+          df4["WEBSITE"]=mod_web
+          df4["ADDRESS"]=mod_add
+          df4["PINCODE"]=mod_pin
+          df4["IMAGE"]=mod_img
+        st.dataframe(df4)
+        col1,col2=st.columns(2)
+        with col1:
+          butt=st.button("Modify")
+        if butt:
+          my_db=sqlite3.connect("bizcard.db")
+          cur=my_db.cursor()
+          cur.execute(f"DELETE FROM bizcard_details where name ='{selected_name}'")
+          my_db.commit()
+          #insert querry
+          insert_querry='''insert into bizcard_details (name, designation, company_name, contact, email, website, address, pincode, image) values(?,?,?,?,?,?,?,?,?)'''
+          datas=df4.values.tolist()[0]
+          cur.execute(insert_querry,datas)
+          my_db.commit()
+          st.success("Modified")
+
+
+
+elif selected =="Modify":
+  my_db=sqlite3.connect("bizcard.db")
+  cur=my_db.cursor()
+  col1,col2=st.columns(2)
+  with col1:
+    select_querry= "SELECT NAME FROM bizcard_details"
+    cur.execute(select_querry)
+    table1=cur.fetchall()
+    my_db.commit()
+    names=[]
+    for i in table1:
+      names.append(i[0])
+    name_select=st.selectbox("Select the Name",names)
+  with col2:
+    select_querry= "SELECT DESIGNATION FROM bizcard_details"
+    cur.execute(select_querry)
+    table2=cur.fetchall()
+    my_db.commit()
+    designtaion=[]
+    for j in table2:
+      designtaion.append(j[0])
+    designtaion_select=st.selectbox("Select the Designtaion",designtaion)
+
+  if name_select and designtaion_select:
+    col1,col2,col3= st.columns(3)
+    with col1:
+      st.write("Selected Name:{name_select}")
+      st.write("")
+      st.write("")
+      st.write("")
+      st.write("Selected Designtaion:{designtaion_select}")
+    with col2:
+      st.write("")
+      st.write("")
+      st.write("")
+      st.write("")
+      remove=st.button("Delete")
+      if remove:
+        st.write("Selected Name:{name_select}")
+        cur.execute("DELETE FROM bizcard_details WHERE NAME ='{name_select}' AND DESIGNATION='{designtaion_select}'")
+        my_db.commit()
+        st.warning("DELETED")
+
+
+
