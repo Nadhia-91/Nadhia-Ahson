@@ -8,10 +8,6 @@ import plotly.express as px
 from sqlalchemy import create_engine
 import streamlit as st
 
-
-# In[64]:
-
-
 path1="C:/Users/jpcom/Desktop/youtube dhaw/phonepe plus/pulse/data/aggregated/transaction/country/india/state/"
 state_loct=os.listdir(path1)
 List={"States":[],"Year":[],"File":[],"Name":[],"Count":[],"Amount":[]}
@@ -40,10 +36,6 @@ aggregated1["States"] = aggregated1["States"].str.replace("andaman-&-nicobar-isl
 aggregated1["States"] = aggregated1["States"].str.replace("-"," ")
 aggregated1["States"] = aggregated1["States"].str.title()
 aggregated1['States'] = aggregated1['States'].str.replace("Dadra & Nagar Haveli & Daman & Diu", "Dadra and Nagar Haveli and Daman and Diu")
-
-
-# In[65]:
-
 
 #path2 agg user
 agg_path2="C:/Users/jpcom/Desktop/youtube dhaw/phonepe plus/pulse/data/aggregated/user/country/india/state/"
@@ -78,10 +70,6 @@ aggregated2["State"] = aggregated2["State"].str.replace("-"," ")
 aggregated2["State"] = aggregated2["State"].str.title()
 aggregated2['State'] = aggregated2['State'].str.replace("Dadra & Nagar Haveli & Daman & Diu", "Dadra and Nagar Haveli and Daman and Diu")
 
-
-# In[66]:
-
-
 #path3 map trans"C:\Users\jpcom\Desktop\youtube dhaw\phonepe plus\pulse\data\map\transaction\hover\country\india\state"
 map_path1="C:/Users/jpcom/Desktop/youtube dhaw/phonepe plus/pulse/data/map/transaction/hover/country/india/state/"
 state_loct=os.listdir(map_path1)
@@ -111,10 +99,6 @@ map1["State"] = map1["State"].str.replace("andaman-&-nicobar-islands","Andaman &
 map1["State"] = map1["State"].str.replace("-"," ")
 map1["State"] = map1["State"].str.title()
 map1['State'] = map1['State'].str.replace("Dadra & Nagar Haveli & Daman & Diu", "Dadra and Nagar Haveli and Daman and Diu")
-
-
-# In[67]:
-
 
 #map_path2
 map_path2="C:/Users/jpcom/Desktop/youtube dhaw/phonepe plus/pulse/data/map/user/hover/country/india/state/"
@@ -146,10 +130,6 @@ map2["State"] = map2["State"].str.replace("-"," ")
 map2["State"] = map2["State"].str.title()
 map2['State'] = map2['State'].str.replace("Dadra & Nagar Haveli & Daman & Diu", "Dadra and Nagar Haveli and Daman and Diu")
 
-
-# In[68]:
-
-
 #top_path1
 top_path1="C:/Users/jpcom/Desktop/youtube dhaw/phonepe plus/pulse/data/top/transaction/country/india/state/"
 top_loct=os.listdir(top_path1)
@@ -180,10 +160,6 @@ top1["State"] = top1["State"].str.replace("-"," ")
 top1["State"] = top1["State"].str.title()
 top1['State'] = top1['State'].str.replace("Dadra & Nagar Haveli & Daman & Diu", "Dadra and Nagar Haveli and Daman and Diu")
 
-
-# In[69]:
-
-
 #top_path2
 top_path2="C:/Users/jpcom/Desktop/youtube dhaw/phonepe plus/pulse/data/top/user/country/india/state/"
 top_loct=os.listdir(top_path2)
@@ -211,10 +187,6 @@ top2["State"] = top2["State"].str.replace("andaman-&-nicobar-islands","Andaman &
 top2["State"] = top2["State"].str.replace("-"," ")
 top2["State"] = top2["State"].str.title()
 top2['State'] = top2['State'].str.replace("Dadra & Nagar Haveli & Daman & Diu", "Dadra and Nagar Haveli and Daman and Diu")
-
-
-# In[70]:
-
 
 #connect to aggregated1
 mycon=psycopg2.connect(host='localhost',user='postgres',password='dhia',database='phonepe_pulse',port='5432')
@@ -295,28 +267,12 @@ for index,row in top2.iterrows():
         values=(row['State'],row['Year'],row['File'],row['Pincode'],row['Registeredusers'])
         cur.execute(inserttop1,values)
         mycon.commit()
-
-
-# In[71]:
-
-
+        
 e=create_engine('postgresql+psycopg2://postgres:dhia@localhost/phonepe_pulse')
-
-
-# In[72]:
-
 
 trans_agg=pd.read_sql('select*from aggregated1',e)
 
-
-# In[ ]:
-
-
 user_agg=pd.read_sql('select*from aggregated2',e)
-
-
-# In[ ]:
-
 
 trans_map=pd.read_sql('select*from map1',e)
 
@@ -326,21 +282,9 @@ trans_map=pd.read_sql('select*from map1',e)
 
 user_map=pd.read_sql('select*from map2',e)
 
-
-# In[ ]:
-
-
 trans_top=pd.read_sql('select*from top1',e)
 
-
-# In[ ]:
-
-
 user_top=pd.read_sql('select*from top2',e)
-
-
-# In[103]:
-
 
 #on map trans 
 def states_amount():
@@ -363,27 +307,7 @@ def states_amount():
               height=600)
     fig.update_geos(fitbounds="locations", visible=False)
     return st.plotly_chart(fig)
-
-
-# In[108]:
-
-
-
-
-
-# In[110]:
-
-
-
-
-# In[112]:
-
-
-
-
-# In[113]:
-
-
+    
 def state_count():
     list2=[]
     for yr in trans_agg["year"].unique():
@@ -404,10 +328,6 @@ def state_count():
     fig.update_geos(fitbounds="locations", visible=False)
     return st.plotly_chart(fig)
 
-
-# In[78]:
-
-
 #(trans) top state
 def top_state_amount():
    List3=[]
@@ -423,10 +343,6 @@ def top_state_amount():
    fig7= px.pie(s2, values= "amount", names= "states",color_discrete_sequence=px.colors.sequential.Emrld_r)
    return st.plotly_chart(fig7)
 
-
-# In[79]:
-
-
 #year(name, amount) trans
 def categories_count():
     List6=[]
@@ -441,10 +357,6 @@ def categories_count():
                 color_discrete_sequence=px.colors.sequential.Redor_r)
     fig5.update_layout(width=200, height= 500)
     return st.plotly_chart(fig5)
-
-
-# In[82]:
-
 
 #(user) top state_user
 def state_user():
@@ -465,10 +377,6 @@ def state_user():
 
    return st.plotly_chart(figb)
 
-
-# In[85]:
-
-
 def district_amount():
     Dist=[]
     for yr in trans_map["year"].unique():
@@ -482,10 +390,6 @@ def district_amount():
     figs.update_layout(width=500, height= 600)
     return st.plotly_chart(figs)
 
-
-# In[ ]:
-
-
 def district_count():
     Dist_count=[]
     for yr in trans_map["year"].unique():
@@ -497,10 +401,6 @@ def district_count():
         new1=pd.concat(Dist_count).reset_index()
     fig_dist= px.bar(new1,x= "count",y= "name", color_discrete_sequence=px.colors.sequential.Emrld_r)
     return st.plotly_chart(fig_dist)
-
-
-# In[86]:
-
 
 def top_district_amount():
     List4=[]
@@ -516,10 +416,6 @@ def top_district_amount():
     fig= px.pie(new2, values= "amount", names= "name",color_discrete_sequence=px.colors.sequential.Emrld_r)
     return st.plotly_chart(fig)
 
-
-# In[89]:
-
-
 #(user) top district
 def top_district_users():
    List5=[]
@@ -533,8 +429,6 @@ def top_district_users():
    figu= px.pie(new1, values= "registereduser", names= "district",color_discrete_sequence=px.colors.sequential.Emrld_r)
    return st.plotly_chart(figu)
 
-
-# In[90]:
 def district_registereduser():
     list9=[]
     for yr in user_map["year"].unique():
@@ -550,10 +444,6 @@ def district_registereduser():
     fig.update_layout(width=400, height= 800)
     return st.plotly_chart(fig)
 
-
-
-
-# In[91]:
 def dist_Appopens():
     lst9=[]
     for yr in user_map["year"].unique():
@@ -567,11 +457,6 @@ def dist_Appopens():
     fig_dist= px.bar(new1,x= "appopens",y= "district", color_discrete_sequence=px.colors.sequential.Emrld_r)
     fig_dist.update_layout(width=400, height= 800)
     return st.plotly_chart(fig_dist)
-
-
-
-# In[92]:
-
 
 def state_registereduser():
     list9=[]
@@ -592,10 +477,6 @@ def state_registereduser():
                height=400)
     fig9.update_geos(fitbounds="locations", visible=False)
     return st.plotly_chart(fig9)
-
-
-# In[93]:
-
 
 def Appopens():
     lst9=[]
@@ -618,10 +499,6 @@ def Appopens():
     fig9.update_geos(fitbounds="locations", visible=False)
     return st.plotly_chart(fig9)
 
-
-# In[97]:
-
-
 #(trans) top pincode
 def top_postcode_amount():
    List8=[]
@@ -635,10 +512,6 @@ def top_postcode_amount():
    fig8= px.pie(new1, values= "amount", names= "pincode",color_discrete_sequence=px.colors.sequential.Emrld_r)
    return st.plotly_chart(fig8)
 
-
-# In[100]:
-
-
 #(trans) top pincode
 def top_postcode_users():
    top=[]
@@ -651,10 +524,6 @@ def top_postcode_users():
    new1= pd.concat(top).head(10).reset_index()
    figr= px.pie(new1, values= "registeredusers", names= "pincode", color_discrete_sequence=px.colors.sequential.Emrld_r)
    return st.plotly_chart(figr)
-
-
-# In[ ]:
-
 
 with st.sidebar:
         select= st.selectbox("Menu",["Home","Explore Data","About"])
@@ -701,10 +570,7 @@ if select == "Explore Data":
                          st.markdown(":violet[Top 10 Districts Transaction]")
                          top_district_amount()
                          st.markdown(":violet[Top 10 Postalcodes Transaction]")
-                         top_postcode_amount()
-
-                    
-                          
+                         top_postcode_amount()                       
 
     if option =='User':
                 Year = st.sidebar.select_slider('Select Year',options=[2018,2019,2020,2021,2022,2023])
