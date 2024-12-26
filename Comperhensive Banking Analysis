@@ -6,7 +6,7 @@
 # Key Component:
 #               * Utilize clustering algorithms to group customers based on their banking 
 #                 behaviors, transaction histories, and demographics. 
-#               * Develop a robust credit scoring system using classification algorithms to assess the creditworthiness of loan                   applicants. 
+#               * Develop a robust credit scoring system using classification algorithms to assess the creditworthiness of loan applicants. 
 #               * Utilize historical data to train the model and predict the likelihood of default 
 #                 or late payments. 
 #               * Enhance risk management by integrating machine learning models into the 
@@ -58,7 +58,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 from sklearn.metrics import classification_report, precision_recall_curve, roc_curve, roc_auc_score
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder,OrdinalEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -223,18 +223,33 @@ sns.kdeplot(data=df, x='Amount_invested_monthly')
 
 sns.kdeplot(data=df, x='Monthly_Balance')
 
+# Drop the categorical columns in dataset which is not impact the prediction
+
+
+df.drop(columns=['ID', 'Name','Payment_Behaviour','Type_of_Loan','Payment_of_Min_Amount'],inplace=True)
+
+#Encoding
+df["Occupation"].nunique()
+
+df["Occupation"]=OrdinalEncoder().fit_transform(df[["Occupation"]])
+df["Credit_Mix"]=OrdinalEncoder().fit_transform(df[["Credit_Mix"]])
+df["Credit_Score"]=OrdinalEncoder().fit_transform(df[["Credit_Score"]])
+
+# Use Correlation Matrix to select feature columns by using Matplotlib
+plt.figure(figsize=(20,20))
+plt.title("Correlation Matrix")
+sns.heatmap(df.corr(), color="k", annot=True, cmap="YlGnBu")
 
 # For Customer Segmentation (Clustering):
 # Feature Selction: 
-#                   select numeric column in the dataset by univariate analysis based on customer banking behaviors, transaction histories, and  demographics  for feature selection.
+# select numeric column in the dataset by univariate analysis based on customer banking behaviors, transaction histories, and  demographics  for feature selection.
 
 # In[59]:
 
 
-cluster_df = df[["Annual_Income", "Monthly_Inhand_Salary", 
-                   "Changed_Credit_Limit",
-                   "Total_EMI_per_month", "Outstanding_Debt", 
-                   "Credit_Utilization_Ratio","Amount_invested_monthly", "Monthly_Balance"]]
+cluster_df = df[["Annual_Income", "Monthly_Inhand_Salary","Num_Bank_Accounts","Num_Credit_Card","Interest_Rate",
+                 "Num_of_Loan","Delay_from_due_date","Num_of_Delayed_Payment", "Num_Credit_Inquiries","Credit_Mix","Outstanding_Debt",
+                 "Credit_Utilization_Ratio","Total_EMI_per_month","Amount_invested_monthly","Monthly_Balance","Credit_Score"]]
 kmeans= KMeans(n_clusters=5)
 kmeans.fit(cluster_df)
 
@@ -264,13 +279,8 @@ print("For n_clusters =",5,"The average silhouette_score is :",silhouette_avg,)
 # Develop a robust credit scoring system using classification algorithms to 
 # assess the creditworthiness of loan applicants. 
 
-# * Drop the categorical columns in dataset which is not impact the prediction
 
 # In[185]:
-
-
-df.drop(columns=['ID', 'Name','Payment_Behaviour','Type_of_Loan','Payment_of_Min_Amount'])
-
 
 #  * Value counts of Target column 
 
@@ -282,11 +292,9 @@ df['Credit_Score'].value_counts()
 
 # In[188]:
 
+df["Credit_Score"]=df["Credit_Score"].map({1:"Good",0:"Standard",2:"Poor"})
 
 sns.displot(df, x="Credit_Score")
-
-
-#  * Checking outlier by using seaborn
 
 # EDA
 # *Bivariate Analysis 
@@ -388,38 +396,6 @@ sns.catplot(data=df, x="Credit_Score", y="Amount_invested_monthly", kind="bar")
 sns.catplot(data=df, x="Credit_Score", y="Monthly_Balance", kind="bar")
 
 
-# Feature Selection
-
-# * change categorical column into numeric column for feature selection
-
-# In[86]:
-
-
-df["Credit_Mix"] = df["Credit_Mix"].map({"Standard":1,"Good":2,"Bad":0})
-
-
-# In[87]:
-
-
-df['Credit_Mix'].value_counts()
-
-
-# In[89]:
-
-
-sns.catplot(data=df, x='Credit_Score', y='Credit_Mix',kind='bar')
-
-
-# * use Correlation Matrix to select feature columns by using Matplotlib
-
-# In[90]:
-
-
-plt.figure(figsize=(20,20))
-plt.title("Correlation Matrix")
-sns.heatmap(df.corr(), color="k", annot=True, cmap="YlGnBu")
-
-
 # Algorithm Selection
 
 # The target column is categorical, so go to select Model under classification methed.
@@ -461,67 +437,9 @@ print(f'Model Accuracy for train data: {model.score(xtrain, ytrain)}')
 print(f'Model Accuracy for test data: {model.score(xtest, ytest)}')
 
 
-# Accuracy for test data of decision tree below 80%, let check with  classification report
-
-# In[99]:
-
-
-ypred = model.predict(xtest)
-
-
-# In[104]:
-
-
-from sklearn.metrics import classification_report, precision_recall_curve, roc_curve, roc_auc_score
-
-print(classification_report(ytest, ypred))
-
-
-# Here also accuracy under 80%, so go to next model
-
-# Next Model
-#  * Random Forest
-
-# In[105]:
-
-
-xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.20, random_state=42)
-model1 = RandomForestClassifier()
-model1.fit(xtrain, ytrain)
-
-
-# In[106]:
-
-
-print(model1.score(xtrain, ytrain))
-
-
-# In[108]:
-
-
-print(f'Model1 Accuracy for train data: {model1.score(xtrain, ytrain)}')
-print(f'Model1 Accuracy for test data: {model1.score(xtest, ytest)}')
-
-
-# Here, accuracy of random forest in above 80%, For perfect prediction check with  classification report
-
-# In[109]:
-
-
-ypred = model1.predict(xtest)
-
-
-# In[111]:
-
-
-print(classification_report(ytest, ypred))
-
-
-# At the end of classification report accuracy of random forest remain above 80%
-
 # prediction
 # 
-# *Let predict the credit score by random forest test data
+# *Let predict the credit score by decision Tree test data
 
 # In[ ]:
 
@@ -541,7 +459,7 @@ k = float(input("Credit History Age: "))
 l = float(input("Monthly Balance: "))
 
 features = np.array([[a, b, c, d, e, f, g, h, i, j, k, l]])
-print("Predicted Credit Score = ", model1.predict(features))
+print("Predicted Credit Score = ", model.predict(features))
 
 
 # NEXT PREDICTION
@@ -637,18 +555,11 @@ sns.catplot(data=df,x="Num_of_Delayed_Payment",y="Monthly_Balance", kind="bar",a
 
 # By the Bivariate analysis select some columns which is important to the prediction and create that into new dataframe by dropping other columns
 
-# In[144]:
-
-
-df1=df.drop(columns=['ID','Customer_ID','Monthly_Inhand_Salary','Credit_Mix','Month','Age','SSN','Occupation',
-                     'Credit_Utilization_Ratio','Name','Payment_Behaviour','Type_of_Loan','Payment_of_Min_Amount',
-                    'Amount_invested_monthly','Payment_Behaviour','Credit_Score','clustered_data','new','cluster_data'])
-
 
 # In[145]:
 
 
-df1.info()
+df.info()
 
 
 # In[146]:
@@ -656,7 +567,7 @@ df1.info()
 
 plt.figure(figsize=(20,20))
 plt.title("Correlation Matrix")
-sns.heatmap(df1.corr(), color="k", annot=True, cmap="YlGnBu")
+sns.heatmap(df.corr(), color="k", annot=True, cmap="YlGnBu")
 
 
 # Feature selction
@@ -665,9 +576,12 @@ sns.heatmap(df1.corr(), color="k", annot=True, cmap="YlGnBu")
 # In[158]:
 
 
-X = np.array(df[['Changed_Credit_Limit','Delay_from_due_date','Num_of_Loan','Interest_Rate',
-                 'Num_Credit_Inquiries','Outstanding_Debt',
-                 'Num_Bank_Accounts','Num_Credit_Card']])
+X = np.array(df[["Annual_Income", "Monthly_Inhand_Salary", 
+                   "Num_Bank_Accounts", "Num_Credit_Card", 
+                   "Interest_Rate", "Num_of_Loan", 
+                   "Delay_from_due_date", 
+                   "Credit_Mix", "Outstanding_Debt", 
+                   "Credit_History_Age", "Monthly_Balance","Credit_Score"]])
 Y = np.array(df[["Num_of_Delayed_Payment"]])
 
 
@@ -692,47 +606,34 @@ print(f'Model Accuracy for test data: {model1.score(xtest, ytest)}')
 ypred = model1.predict(xtest)
 print(classification_report(ytest, ypred))
 
+# DecisionTreeClassifier
+xtrain, xtest, ytrain, ytest = train_test_split(X, Y, test_size=0.30, random_state=42)
+model1 =  DecisionTreeClassifier()
+model1.fit(xtrain, ytrain)
 
-# By this analysis late payment in 50% by default
+print(f'Model Accuracy for train data: {model1.score(xtrain, ytrain)}')
+print(f'Model Accuracy for test data: {model1.score(xtest, ytest)}')
 
-# Performance Prediction (Regression): 
-# * Build regression models to predict key performance indicators (KPIs) for the 
-# banking institution, such as asset growth, revenue, and profitability. 
-# * Analyze the impact of various factors, such as economic indicators and market 
-# trends, on the bank's performance. 
-# * Provide actionable insights to optimize resource allocation, investment 
-# strategies, and overall business performance. 
+# prediction
 
-# important feature selection
+# Let predict the delayed payments by Random Forest test data
 
-# In[190]:
+print("Delayed payments Prediction : ")
+a = float(input("Annual Income: "))
+b = float(input("Monthly Inhand Salary: "))
+c = float(input("Number of Bank Accounts: "))
+d = float(input("Number of Credit cards: "))
+e = float(input("Interest rate: "))
+f = float(input("Number of Loans: "))
+g = float(input("Average number of days delayed by the person: "))
+h = input("Credit Mix (Bad: 0, Standard: 1, Good: 3) : ")
+i = float(input("Outstanding Debt: "))
+j = float(input("Credit History Age: "))
+k = float(input("Monthly Balance: "))
+l = input("Credit Score (Bad: 0, Standard: 1, Good: 3) : ")
 
-
-df2=df.drop(columns=['ID','Customer_ID','Month','Age','SSN','Occupation','Name','Type_of_Loan'])
-
-
-# In[191]:
-
-
-df2
-
-
-# In[193]:
-
-
-X_num = df2.select_dtypes(exclude='object')
-X_cat = df2.select_dtypes(include='object')
-encoder = OneHotEncoder(sparse=False, handle_unknown='error')
-X_encoded = encoder.fit_transform(X_cat)
-X_encoded
-
-
-# In[196]:
-
-
-plt.figure(figsize=(20,20))
-plt.title("Correlation Matrix")
-sns.heatmap(df2.corr(), color="k", annot=True, cmap="YlGnBu")
+features = np.array([[a, b, c, d, e, f, g, h, i, j, k, l]])
+print("Predicted delayed payments = ", model.predict(features))
 
 
 
